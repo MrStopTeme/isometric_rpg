@@ -10,6 +10,10 @@ public class Grid : MonoBehaviour {
 
 	public Color color = Color.white;
 
+	public Transform tilePrefab;
+
+	public TileSet tileSet;
+
 	void OnDrawGizmos() {
 		width *= multiplier;
 		heigth *= multiplier;

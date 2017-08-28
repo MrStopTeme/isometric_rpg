@@ -95,6 +95,12 @@ public class GridEditor : Editor {
 				if (oldindex != index) {
 					oldindex = index;
 					grid.tilePrefab = grid.tileSet.prefabs [index];
+
+					float width = grid.tilePrefab.GetComponent<Renderer>().bounds.size.x;
+					float heigth = grid.tilePrefab.GetComponent<Renderer> ().bounds.size.y;
+
+					grid.width = width;
+					grid.heigth = heigth;
 				}
 			}
 		}
@@ -116,8 +122,13 @@ public class GridEditor : Editor {
 			if (prefab) {
 				Undo.IncrementCurrentGroup ();
 				gameObject = (GameObject)PrefabUtility.InstantiatePrefab (prefab.gameObject);
-
+				Vector3 aligned = new Vector3 (mousePos.x, mousePos.y, 0f);
+				gameObject.transform.position = aligned;
 				Undo.RegisterCreatedObjectUndo (gameObject, "Create " + gameObject.name);
+			}
+
+			if(e.isMouse && e.type == EventType.MouseUp) {
+				GUIUtility.hotControl = 0;
 			}
 		}
 

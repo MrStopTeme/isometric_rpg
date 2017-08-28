@@ -6,26 +6,30 @@ using UnityEngine;
 
 public class snapToGrid : MonoBehaviour {
 	
-	public int xMultiplier = 128, yMultiplier = 128;
+	public float tileWidth , tileHeigth;
+	public Grid grid;
 
-	void Update () {
+	void Update() {
 		
-		int localX = Mathf.RoundToInt(transform.position.x * 100);
-		int localY = Mathf.RoundToInt(transform.position.y * 100);
-	
+		tileWidth = this.GetComponent<Renderer>().bounds.size.x;	
+		tileHeigth = this.GetComponent<Renderer>().bounds.size.y;
 
-		float newX = getClosest (xMultiplier, localX) / 100f;
-		float newY = getClosest (yMultiplier, localY) / 100f;
-		
-		transform.position = new Vector3 (newX, newY, 0f);
+		transform.position = Snap (transform.position);
+
+
 	}
 
-	int getClosest(int multiplier, int value) {
-		int closest = value - (value % multiplier);
-		if (value - closest < closest + multiplier - value)
-			return closest;
-		else
-			return closest + multiplier;
+	Vector3 Snap(Vector3 localPosition) {
+		// Calculate ratios for simple grid snap
+		float xx = Mathf.Round(localPosition.y / tileHeigth - localPosition.x / tileWidth);
+		float yy = Mathf.Round(localPosition.y / tileHeigth + localPosition.x / tileWidth);
 
+		// Calculate grid aligned position from current position
+		float x = (yy - xx) * 0.5f * tileWidth;
+		float y = (yy + xx) * 0.5f * tileHeigth;
+
+		return new Vector3(x, y, 0f);
 	}
+
+
 }

@@ -6,7 +6,7 @@ using System.IO;
 
 [CustomEditor(typeof(Grid))]
 public class GridEditor : Editor {
-
+	
 	Grid grid;
 
 	private int oldindex = 0;
@@ -34,31 +34,20 @@ public class GridEditor : Editor {
 		EditorUtility.FocusProjectWindow ();
 		Selection.activeObject = asset;
 		asset.hideFlags = HideFlags.DontSave;
-
 	}
 
 	public override void OnInspectorGUI() {
-		//base.OnInspectorGUI (); // to show the original GUI
+		//base.OnInspectorGUI (); // to show the original GUI	
 
-		// grid width
-		GUILayout.BeginHorizontal (); 
-		grid.width = EditorGUILayout.FloatField("Grid Width",grid.width);
-		GUILayout.EndHorizontal(); 
-
-		// grid heigth
-		GUILayout.BeginHorizontal (); 
-		grid.heigth = EditorGUILayout.FloatField("Grid Heigth", grid.heigth);
-		GUILayout.EndHorizontal(); 
-
-		// grid multiplier
-		GUILayout.BeginHorizontal (); 
-		grid.multiplier = EditorGUILayout.FloatField("Grid Multiplier", grid.multiplier);
-		GUILayout.EndHorizontal(); 
-
-		// grid color
-		if (GUILayout.Button ("Open Grid Window")) {
+		// grid settings
+		if (GUILayout.Button ("Grid Window")) {
 			GridWindow window = (GridWindow)EditorWindow.GetWindow (typeof(GridWindow));
 			window.init ();
+		}
+
+		// tile settings
+		if (GUILayout.Button ("Object Window")) {
+			ObjectWindow window = (ObjectWindow)EditorWindow.GetWindow (typeof(ObjectWindow));
 		}
 
 		// Tile prefab
@@ -112,7 +101,7 @@ public class GridEditor : Editor {
 		Ray ray = Camera.current.ScreenPointToRay (new Vector3 (e.mousePosition.x, -e.mousePosition.y + Camera.current.pixelHeight));
 		Vector3 mousePos = ray.origin;
 
-		if (e.isMouse && e.type == EventType.MouseDown) {
+		if (e.isMouse && e.type == EventType.mouseDown) {
 			GUIUtility.hotControl = controlId;
 			e.Use ();
 

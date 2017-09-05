@@ -12,6 +12,8 @@ public class GridWindow : EditorWindow {
 
 	void OnGUI() {
 		grid.color = EditorGUILayout.ColorField("Grid Color", grid.color, GUILayout.Width(200));
+		grid.width = EditorGUILayout.FloatField("Grid Width",grid.width);
+		grid.heigth = EditorGUILayout.FloatField("Grid Heigth", grid.heigth);
 	}
 
 }

@@ -5,39 +5,19 @@ using UnityEditor;
 using System.IO;
 
 [CustomEditor(typeof(Grid))]
+[AddComponentMenu("CustomMapEditor/MapEditor")]
 public class GridEditor : Editor {
-	
-	Grid grid;
 
-	private int oldindex = 0;
-
-	void OnEnable() {
-		grid = (Grid)target;
-	}
-
-	[MenuItem("Assets/Create/TileSet")]
-	static void CreateTileSet() {
-		var asset = ScriptableObject.CreateInstance<TileSet> ();
-		var path = AssetDatabase.GetAssetPath (Selection.activeObject);
-
-		if (string.IsNullOrEmpty (path)) {
-			path = "Assets";
-		} else if (Path.GetExtension(path) != "") {
-			path = path.Replace (Path.GetFileName (path), "");
-		} else {
-			path += "/";
-		}
-
-		var assetPathAndName = AssetDatabase.GenerateUniqueAssetPath (path + "TileSet.asset");
-		AssetDatabase.CreateAsset (asset, assetPathAndName);
-		AssetDatabase.SaveAssets ();
-		EditorUtility.FocusProjectWindow ();
-		Selection.activeObject = asset;
-		asset.hideFlags = HideFlags.DontSave;
-	}
+	public Sprite objectSprite = null;
+	public placedObject.object_types objectType = placedObject.object_types.tile;
+	public bool isEditing = false;
 
 	public override void OnInspectorGUI() {
-		//base.OnInspectorGUI (); // to show the original GUI	
+		//base.OnInspectorGUI (); // to show the original GUI
+
+
+
+		objectSprite = (Sprite)AssetDatabase.LoadAssetAtPath<Sprite> ("Assets/Images/isometric_test_tile.png");
 
 		// grid settings
 		if (GUILayout.Button ("Grid Window")) {
@@ -45,56 +25,75 @@ public class GridEditor : Editor {
 			window.init ();
 		}
 
-		// tile settings
-		if (GUILayout.Button ("Object Window")) {
-			ObjectWindow window = (ObjectWindow)EditorWindow.GetWindow (typeof(ObjectWindow));
+		if(!GameObject.Find("Map")) { //if there isn't a "Map" object, instantiate one; it is going to be the parent to all map elements
+			GameObject Map = Instantiate<GameObject>(AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Map.prefab"), new Vector3(0f, 0f), new Quaternion(0f, 0f, 0f, 0f));
+			Map.name = "Map";
 		}
 
-		// Tile prefab
-		EditorGUI.BeginChangeCheck ();
-		var newTilePrefab = (Transform)EditorGUILayout.ObjectField("Tile Prefab", grid.tilePrefab, typeof(Transform), false);
-		if(EditorGUI.EndChangeCheck()) {
-			grid.tilePrefab = newTilePrefab;
-			Undo.RecordObject(target, "Grid Changed");
-		}
+		objectSprite = (Sprite)EditorGUILayout.ObjectField ("Texture:", objectSprite, typeof(Sprite), false);
+		objectType = (placedObject.object_types)EditorGUILayout.EnumPopup ("Object Type:", objectType);
+		isEditing = (bool)EditorGUILayout.Toggle ("Editing:", isEditing);
+	}
 
-		// Tile Map
-		EditorGUI.BeginChangeCheck();
-		var newTileSet = (TileSet)EditorGUILayout.ObjectField ("Tileset", grid.tileSet, typeof(TileSet), false);
-		if (EditorGUI.EndChangeCheck ()) {
-			grid.tileSet = newTileSet;
-			Undo.RecordObject (target, "Grid Changed");
+	public GameObject gameobject;
+	public placedObject placed;
 
-		}
+	void OnSceneGUI() {
 
-		if (grid.tileSet != null) {
-			EditorGUI.BeginChangeCheck ();
-			var names = new string[grid.tileSet.prefabs.Length];
-			var values = new int[names.Length];
+		int controlId = GUIUtility.GetControlID (FocusType.Passive);
+	
+	/*
+	 Basic workflow:
+	 If you are editing:
+	 	if there is something under the cursor
+	 		if there is a tile under the cursor
+	 			if you have tile selected, just change its texture
+	 			else, just place your object
+	 		if there is a wall under the cursor
+	 			if you have wall selected, just change its texture
+	 			else, just place your object
+	 		if there is a decal under the cursor
+	 			if you have decal selected, just change its texture
+				else, just place your object
+		if there is nothing under the cursor
+			place your object
 
-			for (int i = 0; i < names.Length; i++) {
-				names [i] = grid.tileSet.prefabs [i] != null ? grid.tileSet.prefabs [i].name : "";
-				values [i] = i;
-			}
-
-			var index = EditorGUILayout.IntPopup ("Select Tile", oldindex, names, values);
-
-			if (EditorGUI.EndChangeCheck()) {
-				Undo.RecordObject (target, "Grid Changed");
-				if (oldindex != index) {
-					oldindex = index;
-					grid.tilePrefab = grid.tileSet.prefabs [index];
-
-					float width = grid.tilePrefab.GetComponent<Renderer>().bounds.size.x;
-					float heigth = grid.tilePrefab.GetComponent<Renderer> ().bounds.size.y;
-
-					grid.width = width;
-					grid.heigth = heigth;
+		MAKE THAT INTO CODE ASAP PLEASE
+	*/
+		if (isEditing) { 
+			GUIUtility.hotControl = controlId;
+			Event.current.Use ();
+			if (Physics2D.OverlapPoint (Camera.current.ScreenToWorldPoint (Event.current.mousePosition))) {
+				gameobject = Physics2D.OverlapPoint (Camera.current.ScreenToWorldPoint (Event.current.mousePosition)).gameObject;
+				if (placed != null) {
+					if (Event.current.button == 0 && Event.current.type == EventType.mouseDown) {
+						if (gameobject.GetComponent<placedObject> ().objectType == objectType) {
+							gameobject.GetComponent<SpriteRenderer> ().sprite = objectSprite;
+							gameobject.name = objectSprite.name;
+						} else {
+							gameobject = initializeObject (gameobject);
+							Instantiate (gameobject, new Vector3 (Event.current.mousePosition.x, Event.current.mousePosition.y, 0f), new Quaternion (0f, 0f, 0f, 0f), GameObject.Find ("Map").transform);
+						}
+					}
 				}
 			}
 		}
+		
 	}
 
+	GameObject initializeObject (GameObject gameobject) {
+		if (objectType == placedObject.object_types.tile)
+			gameobject = AssetDatabase.LoadAssetAtPath<GameObject> ("Assets/Prefabs/Tile.prefab");
+		else if (objectType == placedObject.object_types.wall)
+			gameobject = AssetDatabase.LoadAssetAtPath<GameObject> ("Assets/Prefabs/Wall.prefab");
+		else if (objectType == placedObject.object_types.decal)
+			gameobject = AssetDatabase.LoadAssetAtPath<GameObject> ("Assets/Prefabs/Decal.prefab");
+		gameobject.GetComponent<SpriteRenderer> ().sprite = objectSprite;
+		gameobject.GetComponent<placedObject> ().objectType = objectType;
+		gameobject.name = objectSprite.name;
+		return gameobject;
+	}
+/*
 	void OnSceneGUI() {
 		int controlId = GUIUtility.GetControlID (FocusType.Passive);
 		Event e = Event.current;
@@ -122,5 +121,5 @@ public class GridEditor : Editor {
 		}
 
 	}
-
+*/
 }

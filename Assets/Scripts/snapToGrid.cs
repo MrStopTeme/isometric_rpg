@@ -10,9 +10,14 @@ public class snapToGrid : MonoBehaviour {
 	public Grid grid;
 
 	void Update() {
-		
-		tileWidth = this.GetComponent<Renderer>().bounds.size.x;	
-		tileHeigth = this.GetComponent<Renderer>().bounds.size.y;
+
+		if (this.GetComponent<placedObject> ().objectType == placedObject.object_types.tile) {
+			tileWidth = this.GetComponent<Renderer> ().bounds.size.x;	
+			tileHeigth = this.GetComponent<Renderer> ().bounds.size.y;
+		} else {
+			tileWidth = grid.width;	
+			tileHeigth = grid.heigth;
+		}
 
 		transform.position = Snap (transform.position);
 
